@@ -36,13 +36,19 @@ jobs:
         working-directory: ./FREZSO
         run: npm run build
 
+      - name: Check build output
+        working-directory: ./FREZSO
+        run: |
+          echo "Build output:"
+          find .output/public -maxdepth 2 -type f | head -50
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload build
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./FREZSO/dist
+          path: ./FREZSO/.output/public
 
   deploy:
     environment:
