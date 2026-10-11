@@ -15,6 +15,18 @@ export default defineConfig(async ({ command }) => {
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tanstackStart({
       server: { entry: "server" },
+      prerender: {
+        enabled: true,
+        crawlLinks: true,
+      },
+      pages: [
+        {
+          path: "/",
+          prerender: {
+            enabled: true,
+          },
+        },
+      ],
       importProtection: {
         behavior: "error",
         client: {
@@ -27,7 +39,27 @@ export default defineConfig(async ({ command }) => {
 
   if (command === "build") {
     const { nitro } = await import("nitro/vite");
-    plugins.push(nitro({ defaultPreset: "cloudflare-module" }));
+    const fs = await import("node:fs");
+    plugins.push(
+      nitro({
+        preset: "github-pages",
+        prerender: {
+          routes: ["/"],
+          crawlLinks: true,
+          failOnError: false,
+        },
+        hooks: {
+          async compiled(nitro) {
+            const publicDir = nitro.options.output.publicDir;
+            const indexPath = path.join(publicDir, "index.html");
+            const notFoundPath = path.join(publicDir, "404.html");
+            if (fs.existsSync(indexPath) && !fs.existsSync(notFoundPath)) {
+              await fs.promises.copyFile(indexPath, notFoundPath);
+            }
+          },
+        },
+      }),
+    );
   }
 
   plugins.push(viteReact());
